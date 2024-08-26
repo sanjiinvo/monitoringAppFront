@@ -1,0 +1,15 @@
+.login-container{
+    width: 100%;
+    height: 100%;
+    margin: auto;
+
+    .login-box{
+        margin: auto;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-evenly;
+        background-color: rgb(198, 216, 140);
+        width: 400px;
+        height: 400px;
+    }
+}
