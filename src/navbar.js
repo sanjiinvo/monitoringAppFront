@@ -7,12 +7,13 @@ const MenuBar = () => {
     const token = localStorage.getItem('token');
     const currentUser = localStorage.getItem('username');
     const currentUserRole = localStorage.getItem('userrole');
+    const cuurentUserRlname = localStorage.getItem('realname');
     return (
         <nav className="main-menu">
             <ul className="main-menu-list">
                 <li><Link to='/'>Home</Link></li>
                 <li><Link to='/admin'>Admin Panel</Link></li>
-                <p>{currentUser}</p>
+                <p>{cuurentUserRlname}</p>
                 <p>{currentUserRole}</p>
                 
             </ul>

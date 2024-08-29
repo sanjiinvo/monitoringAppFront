@@ -5,60 +5,96 @@ import './adminpanel.scss';
 import axios from "axios";
 
 const AdminPanel = () => {
-
     const [allRoles, setAllRoles] = useState([]);
     const [allUsers, setAllUsers] = useState([]);
     const [allDepartments, setAllDepartments] = useState([]);
     const [allProcesses, setAllProcesses] = useState([]);
     const [allObjects, setAllObjects] = useState([]);
     const [newDepartmentName, setNewDepartmentName] = useState('');
-    const [correntHelpWindows, setCorrentHelpWindows] = useState('');
+    const [helpData, setHelpData] = useState([]);  // Состояние для хранения данных из API
+    const [currentWindowHelpState, setCurrentWindowHelpState] = useState('');
+
     const rolesApi = 'http://192.168.101.226:5555/api/roles';
     const usersApi = 'http://192.168.101.226:5555/api/users';
     const departmentsApi = 'http://192.168.101.226:5555/api/departments';
     const processApi = 'http://192.168.101.226:5555/api/processes';
     const objectApi = 'http://192.168.101.226:5555/api/objects';
 
+    // useEffect для загрузки данных при монтировании компонента
     useEffect(() => {
-        setCorrentHelpWindows('')
-        const token = localStorage.getItem('token');
-        console.log(token);
-        const config = {
-            headers: {
-                Authorization: `Bearer ${token}`,
-            },
+        const fetchData = async () => {
+            try {
+                const token = localStorage.getItem('token');
+                const config = {
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                    },
+                };
+
+                // Загрузка данных для выпадающих списков
+                const responseDepartments = await axios.get(`${departmentsApi}/departments`, config);
+                setAllDepartments(responseDepartments.data);
+
+                const responseRoles = await axios.get(`${rolesApi}/roles`, config);
+                setAllRoles(responseRoles.data);
+
+                const responseProcesses = await axios.get(`${processApi}/processes`, config);
+                setAllProcesses(responseProcesses.data);
+
+                const responseObjects = await axios.get(`${objectApi}/objects`, config);
+                setAllObjects(responseObjects.data);
+
+            } catch (error) {
+                console.error("Error fetching data:", error);
+            }
         };
-        GetInfo(config);
-    }, []);
 
-    const windowsHelpHandChanger = (e) => {
-        setCorrentHelpWindows('');
-        setCorrentHelpWindows(e)
-        console.log(`help windows: ${windowsHelpHandChanger}`);
-        
-    }
-    const GetInfo = async (config) => {
+        fetchData();
+    }, []);  // Пустой массив зависимостей означает, что этот эффект будет выполнен только один раз после монтирования компонента
+
+    const handleAccordionClick = async (section) => {
         try {
-            const getAllRoles = await axios.get(`${rolesApi}/roles`, config);
-            setAllRoles(getAllRoles.data);
-            console.log(allRoles);
+            const token = localStorage.getItem('token');
+            const config = {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                },
+            };
+
+            let data = [];
+            setCurrentWindowHelpState(section)
+            switch (section) {
+                case 'departments':
+                    const response = await axios.get(`${departmentsApi}/departments`, config);
+                    data = response.data;
+                    break;
+                case 'processes':
+                    const responseProcesses = await axios.get(`${processApi}/processes`, config);
+                    data = responseProcesses.data;
+                    break;
+                case 'objects':
+                    const responseObjects = await axios.get(`${objectApi}/objects`, config);
+                    data = responseObjects.data;
+                    break;
+                case 'users':
+                    const responseUsers = await axios.get(`${usersApi}/users`, config);
+                    data = responseUsers.data;
+                    break;
+                case 'roles':
+                    const responseRoles = await axios.get(`${rolesApi}/roles`, config);
+                    data = responseRoles.data;
+                    break;
+                default:
+                    break;
+            }
+
+            setHelpData(data); // Обновляем данные для отображения
+            console.log(helpData);
             
-            const getAllUsers = await axios.get(`${usersApi}/users`, config);
-            setAllUsers(getAllUsers.data);
-
-            const getAllDepartments = await axios.get(`${departmentsApi}/departments`, config);
-            setAllDepartments(getAllDepartments.data);
-
-            const getAllObjects = await axios.get(`${objectApi}/objects`, config);
-            setAllObjects(getAllObjects.data);
-
-            const getAllProcesses = await axios.get(`${processApi}/processes`, config);
-            setAllProcesses(getAllProcesses.data);
-
         } catch (error) {
             console.error("Error fetching data:", error);
         }
-    };
+    }
 
     const handleCreateDepartment = async (e) => {
         e.preventDefault();
@@ -72,8 +108,6 @@ const AdminPanel = () => {
         try {
             const response = await axios.post(`${departmentsApi}/newdepartment`, { departmentName: newDepartmentName }, config);
             console.log('Department created:', response.data);
-            setNewDepartmentName(''); // Clear input
-            GetInfo(config); // Refresh data
         } catch (error) {
             console.error('Error creating department:', error);
         }
@@ -82,13 +116,27 @@ const AdminPanel = () => {
     return(
         <div>
             <div className="help-window">
-
+                {helpData.length > 0 ? (
+                   <ul>
+                   {helpData.map((item, index) => (
+                       <li id={item.id} key={index}>
+                           {Object.entries(item).map(([key, value]) => (
+                               <div key={key}>
+                                   <strong>{key}:</strong> {value}
+                               </div>
+                           ))}
+                       </li>
+                   ))}
+               </ul>
+                ) : (
+                    <p>No data available</p>
+                )}
             </div>
-            <Container>
+            <Container className="admin-panel">
                 <h1>Admin Panel</h1>
                 <Accordion defaultActiveKey={0}>
                     <Accordion.Item eventKey="0" >
-                        <Accordion.Header onClick={()=>windowsHelpHandChanger('departments')}>Add Departments</Accordion.Header>
+                        <Accordion.Header onClick={() => handleAccordionClick('departments')}>Add Departments</Accordion.Header>
                         <Accordion.Body>
                             <form onSubmit={handleCreateDepartment}>
                                 <label>
@@ -105,7 +153,7 @@ const AdminPanel = () => {
                         </Accordion.Body>
                     </Accordion.Item>
                     <Accordion.Item eventKey="1">
-                        <Accordion.Header>Add Process</Accordion.Header>
+                        <Accordion.Header onClick={() => handleAccordionClick('processes')}>Add Process</Accordion.Header>
                         <Accordion.Body>
                             <form className="AddProcessForm">
                                 <label>Process Name:
@@ -116,7 +164,7 @@ const AdminPanel = () => {
                         </Accordion.Body>
                     </Accordion.Item>
                     <Accordion.Item eventKey="2">
-                        <Accordion.Header>Add Object</Accordion.Header>
+                        <Accordion.Header onClick={() => handleAccordionClick('objects')}>Add Object</Accordion.Header>
                         <Accordion.Body>
                             <form className="AddObjectForm">
                                 <label>Task Name:
@@ -127,7 +175,7 @@ const AdminPanel = () => {
                         </Accordion.Body>
                     </Accordion.Item>
                     <Accordion.Item eventKey="3">
-                        <Accordion.Header>Add User</Accordion.Header>
+                        <Accordion.Header onClick={() => handleAccordionClick('users')}>Add User</Accordion.Header>
                         <Accordion.Body>
                             <form className="AddUserForm">
                                 <label>
@@ -152,8 +200,8 @@ const AdminPanel = () => {
                                     Role:
                                     <select>
                                         {allRoles.map(role => (
-                                            <option key={role.id} value={role.rolename}>
-                                                {role.rolename}
+                                            <option key={role.id} value={role.id}>
+                                                {role.roleName}
                                             </option>
                                         ))}
                                     </select>

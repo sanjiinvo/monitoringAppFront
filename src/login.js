@@ -19,15 +19,19 @@ const Login = ({ onLogin }) => {  // добавляем onLogin в качест�
         password: password
       });
 
-      const { token, username, role } = response.data;
+      const { token, username, rlname, role } = response.data;
 
       localStorage.setItem('token', token);
       localStorage.setItem('username', username);
       localStorage.setItem('userrole', role);
+      localStorage.setItem('realname', rlname);
+
 
       console.log('Token:', token);
       console.log('Username:', username);
       console.log('Role:', role);
+      console.log('Realname:', rlname);
+      
 
       if (token) {
         setErrorMessage('Authorized');
