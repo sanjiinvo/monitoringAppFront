@@ -14,7 +14,7 @@ const Login = ({ onLogin }) => {  // добавляем onLogin в качест�
     console.log(`Login: ${login}, Password: ${password}`);
 
     try {
-      const response = await axios.post('http://192.168.101.226:5555/api/users/login', {
+      const response = await axios.post('http://localhost:5555/api/users/login', {
         username: login,
         password: password
       });
