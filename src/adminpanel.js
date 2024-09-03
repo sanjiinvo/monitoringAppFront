@@ -17,7 +17,7 @@ const AdminPanel = () => {
     const [ newUserName, setNewUserName] = useState('');
     const [ newUserRealName, setNewUserRealNAme] = useState('');
     const [ newUserPassword, setnewUserPassword] = useState('');
-    const [ newUserRole, setNewUserRole] = useState('');
+    const [ newUserRole, setNewUserRole] = useState();
     const [ newUserDepartment, setNewUserDepartment] = useState()
 
     const [helpData, setHelpData] = useState([]);  // Состояние для хранения данных из API
@@ -115,7 +115,7 @@ const AdminPanel = () => {
         e.preventDefault();
         try {
             const config = getAuthConfig()
-            const response = await axios.post(`${usersApi}/newuser`, { username: newUserName, password: newUserPassword, rlname: newUserRealName, role: newUserRole, departmentId: newUserDepartment }, config);
+            const response = await axios.post(`${usersApi}/newuser`, { username: newUserName, password: newUserPassword, rlname: newUserRealName, roleId: newUserRole, departmentId: newUserDepartment }, config);
 
             console.log('User created:', response.data);
             console.log(`username: ${newUserName} password: ${newUserPassword}, rlname: ${newUserRealName}, role: ${newUserRole}, department: ${newUserDepartment}`);
@@ -217,7 +217,7 @@ const AdminPanel = () => {
                                     Role:
                                     <select onChange={(e)=> setNewUserRole(e.target.value)}>
                                         {allRoles.map(role => (
-                                            <option key={role.id} value={role.roleName}>
+                                            <option key={role.id} value={role.id}>
                                                 {role.roleName}
                                             </option>
                                         ))}
