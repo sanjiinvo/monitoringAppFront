@@ -13,17 +13,21 @@ const AdminPanel = () => {
     const [allObjects, setAllObjects] = useState([]);
 
     const [newDepartmentName, setNewDepartmentName] = useState('');
+    const [newUserName, setNewUserName] = useState('');
+    const [newUserRealName, setNewUserRealNAme] = useState('');
+    const [newUserPassword, setnewUserPassword] = useState('');
+    const [newUserRole, setNewUserRole] = useState();
+    const [newUserDepartment, setNewUserDepartment] = useState()
 
-    const [ newUserName, setNewUserName] = useState('');
-    const [ newUserRealName, setNewUserRealNAme] = useState('');
-    const [ newUserPassword, setnewUserPassword] = useState('');
-    const [ newUserRole, setNewUserRole] = useState();
-    const [ newUserDepartment, setNewUserDepartment] = useState()
+    const [newProccessName, setNewProcessName] = useState('');
+    const [newProcessDescription, setNewProcessDescription] = useState('');
+    const [newProccessWorkingTime, setNewProcessWorkingTime] = useState('');
+    const [newProcessDepartment, setNewProcessDepartment] = useState();
+    const [newProccessDependency, setNewProcessDependency] = useState([]); // Массив для зависимостей
 
-    const [helpData, setHelpData] = useState([]);  // Состояние для хранения данных из API
+    const [helpData, setHelpData] = useState([]);  
     const [currentWindowHelpState, setCurrentWindowHelpState] = useState('');
     const {getAuthConfig} = useAuth()
-
 
     const rolesApi = 'http://localhost:5555/api/roles';
     const usersApi = 'http://localhost:5555/api/users';
@@ -31,12 +35,10 @@ const AdminPanel = () => {
     const processApi = 'http://localhost:5555/api/processes';
     const objectApi = 'http://localhost:5555/api/objects';
 
-
     // useEffect для загрузки данных при монтировании компонента
     const fetchData = async () => {
         try {
-                const config = getAuthConfig()
-                            
+            const config = getAuthConfig();
 
             // Загрузка данных для выпадающих списков
             const responseDepartments = await axios.get(`${departmentsApi}/departments`, config);
@@ -55,14 +57,14 @@ const AdminPanel = () => {
             console.error("Error fetching data:", error);
         }
     };
-    useEffect(() => {
 
+    useEffect(() => {
         fetchData();
-    }, []);  // Пустой массив зависимостей означает, что этот эффект будет выполнен только один раз после монтирования компонента
+    }, []);
 
     const handleAccordionClick = async (section) => {
         try {
-            const config = getAuthConfig()
+            const config = getAuthConfig();
 
             let data = [];
             setCurrentWindowHelpState(section)
@@ -91,43 +93,80 @@ const AdminPanel = () => {
                     break;
             }
 
-            setHelpData(data); // Обновляем данные для отображения
+            setHelpData(data); 
             console.log(helpData);
             
         } catch (error) {
             console.error("Error fetching data:", error);
         }
-    }
+    };
 
     const handleCreateDepartment = async (e) => {
         e.preventDefault();
         try {
-            const config = getAuthConfig()
+            const config = getAuthConfig();
             const response = await axios.post(`${departmentsApi}/newdepartment`, { departmentName: newDepartmentName }, config);
             console.log('Department created:', response.data);
+        popUpStatus('department', response.data);
+        fetchData();
         } catch (error) {
             console.error('Error creating department:', error);
         }
-        fetchData()
     };
-    const handleCreateUsere = async (e) => {
 
+    const handleCreateUser = async (e) => {
         e.preventDefault();
         try {
-            const config = getAuthConfig()
+            const config = getAuthConfig();
             const response = await axios.post(`${usersApi}/newuser`, { username: newUserName, password: newUserPassword, rlname: newUserRealName, roleId: newUserRole, departmentId: newUserDepartment }, config);
-
             console.log('User created:', response.data);
-            console.log(`username: ${newUserName} password: ${newUserPassword}, rlname: ${newUserRealName}, role: ${newUserRole}, department: ${newUserDepartment}`);
-            
         } catch (error) {
             console.error('Error creating user:', error);
         }
-        fetchData()
+        fetchData();
+    };
+
+    const handleCreateProcess = async (e) => {
+        e.preventDefault();
+        try {
+            const config = getAuthConfig();
+            const response = await axios.post(`${processApi}/newprocess`, {
+                name: newProccessName, 
+                description: newProcessDescription, 
+                workingTime: newProccessWorkingTime, 
+                departmentId: newProcessDepartment, 
+                dependencies: newProccessDependency  // Отправка массива зависимостей
+            }, config);
+            console.log('Process created:', response.data);
+        } catch (error) {
+            console.error('Error creating process:', error);
+        }
+    };
+    const popUpStatus = (model, info) => {
+        if (model === 'department') {
+            return (
+                <div>
+                    {`Создан новый отдел: ${info.departmentName}`}
+                </div>
+            )
+        }
     }
+    const handleDependencyChange = (e) => {
+        const { options } = e.target;
+        const selectedDependencies = [];
+        for (let i = 0; i < options.length; i++) {
+            if (options[i].selected) {
+                selectedDependencies.push(parseInt(options[i].value));
+            }
+        }
+        setNewProcessDependency(selectedDependencies);
+    };
 
     return(
         <div>
+            <div className="popup-stats">
+                    {popUpStatus()}
+            </div>
             <div className="help-window">
                 {helpData.length > 0 ? (
                    <ul>
@@ -168,11 +207,32 @@ const AdminPanel = () => {
                     <Accordion.Item eventKey="1">
                         <Accordion.Header onClick={() => handleAccordionClick('processes')}>Add Process</Accordion.Header>
                         <Accordion.Body>
-                            <form className="AddProcessForm">
+                            <form className="AddProcessForm" onSubmit={handleCreateProcess}>
                                 <label>Process Name:
-                                    <input type="text" name="processName" />
+                                    <input type="text" name="processName" onChange={(e) => setNewProcessName(e.target.value)} />
                                 </label>
-                                {/* Add more fields as needed */}
+                                <label>Описание процесса:
+                                    <input type="text" name="processDescription" onChange={(e) => setNewProcessDescription(e.target.value)} />
+                                </label> 
+                                <label>Время выполнения:
+                                    <input placeholder="Дней" type="text" name="workingTime" onChange={(e) => setNewProcessWorkingTime(e.target.value)} />
+                                </label>
+                                <label>Отдел:
+                                    <select onChange={(e) => setNewProcessDepartment(e.target.value)}>
+                                        {allDepartments.map(dept => (
+                                            <option key={dept.id} value={dept.id}>{dept.departmentName}</option>
+                                        ))}
+                                    </select>
+                                </label>
+                                <label>Зависимости:
+                                    <select multiple onChange={handleDependencyChange}>
+                                        <option value="">None</option>
+                                        {allProcesses.map(process => (
+                                            <option key={process.id} value={process.id}>{process.name}</option>
+                                        ))}
+                                    </select>
+                                </label> 
+                                <button type="submit">Create Process</button>
                             </form>
                         </Accordion.Body>
                     </Accordion.Item>
@@ -190,22 +250,22 @@ const AdminPanel = () => {
                     <Accordion.Item eventKey="3">
                         <Accordion.Header onClick={() => handleAccordionClick('users')}>Add User</Accordion.Header>
                         <Accordion.Body>
-                            <form className="AddUserForm" onSubmit={handleCreateUsere}>
+                            <form className="AddUserForm" onSubmit={handleCreateUser}>
                                 <label>
                                     User login:
-                                    <input value={newUserName} type="text" name="userLogin" onChange={(e)=> setNewUserName(e.target.value)} />
+                                    <input value={newUserName} type="text" name="userLogin" onChange={(e) => setNewUserName(e.target.value)} />
                                 </label>
                                 <label>
                                     User Real Name:
-                                    <input type="text" name="userRealName" value={newUserRealName} onChange={(e)=> setNewUserRealNAme(e.target.value)}/>
+                                    <input type="text" name="userRealName" value={newUserRealName} onChange={(e) => setNewUserRealNAme(e.target.value)} />
                                 </label>
                                 <label>
                                     User Password:
-                                    <input type="password" name="userPassword" value={newUserPassword} onChange={(e)=> setnewUserPassword(e.target.value)}/>
+                                    <input type="password" name="userPassword" value={newUserPassword} onChange={(e) => setnewUserPassword(e.target.value)} />
                                 </label>
                                 <label>
                                     Department:
-                                    <select onChange={(e)=> setNewUserDepartment((e.target.value))}>
+                                    <select onChange={(e) => setNewUserDepartment(e.target.value)}>
                                         {allDepartments.map(dept => (
                                             <option key={dept.id} value={dept.id}>
                                                 {dept.departmentName}
@@ -215,7 +275,7 @@ const AdminPanel = () => {
                                 </label>
                                 <label>
                                     Role:
-                                    <select onChange={(e)=> setNewUserRole(e.target.value)}>
+                                    <select onChange={(e) => setNewUserRole(e.target.value)}>
                                         {allRoles.map(role => (
                                             <option key={role.id} value={role.id}>
                                                 {role.roleName}
