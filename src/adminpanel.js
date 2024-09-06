@@ -17,17 +17,18 @@ const AdminPanel = () => {
     const [newUserRealName, setNewUserRealNAme] = useState('');
     const [newUserPassword, setnewUserPassword] = useState('');
     const [newUserRole, setNewUserRole] = useState();
-    const [newUserDepartment, setNewUserDepartment] = useState()
+    const [newUserDepartment, setNewUserDepartment] = useState();
 
     const [newProccessName, setNewProcessName] = useState('');
     const [newProcessDescription, setNewProcessDescription] = useState('');
     const [newProccessWorkingTime, setNewProcessWorkingTime] = useState('');
     const [newProcessDepartment, setNewProcessDepartment] = useState();
-    const [newProccessDependency, setNewProcessDependency] = useState([]); // Массив для зависимостей
+    const [newProccessDependency, setNewProcessDependency] = useState([]);
 
     const [helpData, setHelpData] = useState([]);  
     const [currentWindowHelpState, setCurrentWindowHelpState] = useState('');
-    const {getAuthConfig} = useAuth()
+    const [successMessage, setSuccessMessage] = useState(''); // Состояние для сообщений об успехе
+    const {getAuthConfig} = useAuth();
 
     const rolesApi = 'http://localhost:5555/api/roles';
     const usersApi = 'http://localhost:5555/api/users';
@@ -35,12 +36,10 @@ const AdminPanel = () => {
     const processApi = 'http://localhost:5555/api/processes';
     const objectApi = 'http://localhost:5555/api/objects';
 
-    // useEffect для загрузки данных при монтировании компонента
+    // Функция для загрузки данных
     const fetchData = async () => {
         try {
             const config = getAuthConfig();
-
-            // Загрузка данных для выпадающих списков
             const responseDepartments = await axios.get(`${departmentsApi}/departments`, config);
             setAllDepartments(responseDepartments.data);
 
@@ -65,7 +64,6 @@ const AdminPanel = () => {
     const handleAccordionClick = async (section) => {
         try {
             const config = getAuthConfig();
-
             let data = [];
             setCurrentWindowHelpState(section)
             switch (section) {
@@ -107,8 +105,8 @@ const AdminPanel = () => {
             const config = getAuthConfig();
             const response = await axios.post(`${departmentsApi}/newdepartment`, { departmentName: newDepartmentName }, config);
             console.log('Department created:', response.data);
-        popUpStatus('department', response.data);
-        fetchData();
+            setSuccessMessage(`Создан новый отдел: ${response.data.departmentName}`); // Устанавливаем сообщение
+            fetchData();
         } catch (error) {
             console.error('Error creating department:', error);
         }
@@ -120,10 +118,11 @@ const AdminPanel = () => {
             const config = getAuthConfig();
             const response = await axios.post(`${usersApi}/newuser`, { username: newUserName, password: newUserPassword, rlname: newUserRealName, roleId: newUserRole, departmentId: newUserDepartment }, config);
             console.log('User created:', response.data);
+            setSuccessMessage(`Пользователь ${response.data.username} успешно создан!`);
+            fetchData();
         } catch (error) {
             console.error('Error creating user:', error);
         }
-        fetchData();
     };
 
     const handleCreateProcess = async (e) => {
@@ -135,22 +134,16 @@ const AdminPanel = () => {
                 description: newProcessDescription, 
                 workingTime: newProccessWorkingTime, 
                 departmentId: newProcessDepartment, 
-                dependencies: newProccessDependency  // Отправка массива зависимостей
+                dependencies: newProccessDependency
             }, config);
             console.log('Process created:', response.data);
+            setSuccessMessage(`Процесс ${response.data.name} успешно создан!`);
+            fetchData();
         } catch (error) {
             console.error('Error creating process:', error);
         }
     };
-    const popUpStatus = (model, info) => {
-        if (model === 'department') {
-            return (
-                <div>
-                    {`Создан новый отдел: ${info.departmentName}`}
-                </div>
-            )
-        }
-    }
+
     const handleDependencyChange = (e) => {
         const { options } = e.target;
         const selectedDependencies = [];
@@ -164,9 +157,12 @@ const AdminPanel = () => {
 
     return(
         <div>
-            <div className="popup-stats">
-                    {popUpStatus()}
-            </div>
+            {successMessage && (
+                <div className="popup-stats">
+                    {successMessage}
+                    <button onClick={() => setSuccessMessage('')}>Закрыть</button>
+                </div>
+            )}
             <div className="help-window">
                 {helpData.length > 0 ? (
                    <ul>

@@ -5,6 +5,7 @@ import Login from './login';
 import { Navigate, Route, Routes } from 'react-router-dom';
 import MenuBar from './navbar';
 import HomePage from './homepage';
+import WorkingPanel from './workingPanel';
 
 function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -29,6 +30,7 @@ function App() {
           <>
             <Route path="/" element={<HomePage />} />
             <Route path="/admin" element={<AdminPanel />} />
+            <Route path="/workpanel" element={<WorkingPanel />} />
           </>
         )}
         <Route path="*" element={<Navigate to={isAuthenticated ? "/" : "/login"} />} />
