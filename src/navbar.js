@@ -13,6 +13,8 @@ const MenuBar = () => {
             <ul className="main-menu-list">
                 <li><Link to='/'>Home</Link></li>
                 <li><Link to='/admin'>Admin Panel</Link></li>
+                <li><Link to='/workpanel'>Working panel</Link></li>
+
                 <p>{cuurentUserRlname}</p>
                 <p>{currentUserRole}</p>
                 

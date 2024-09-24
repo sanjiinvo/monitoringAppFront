@@ -4,8 +4,11 @@ import 'bootstrap/dist/css/bootstrap.min.css';
 import './adminpanel.scss';
 import axios from "axios";
 import useAuth from "./isAuth";
+import { useNavigate } from "react-router-dom";
 
 const AdminPanel = () => {
+    const navigate = useNavigate('')
+
     const [allRoles, setAllRoles] = useState([]);
     const [allUsers, setAllUsers] = useState([]);
     const [allDepartments, setAllDepartments] = useState([]);
@@ -24,6 +27,10 @@ const AdminPanel = () => {
     const [newProccessWorkingTime, setNewProcessWorkingTime] = useState('');
     const [newProcessDepartment, setNewProcessDepartment] = useState();
     const [newProccessDependency, setNewProcessDependency] = useState([]);
+
+    const [newObjectName, setNewObjectName] = useState('');
+    const [newObjectDescription, setNewObjectDescription] = useState('');
+
 
     const [helpData, setHelpData] = useState([]);  
     const [currentWindowHelpState, setCurrentWindowHelpState] = useState('');
@@ -54,6 +61,9 @@ const AdminPanel = () => {
 
         } catch (error) {
             console.error("Error fetching data:", error);
+            if(error.code === 401){
+                navigate('/login')
+            }
         }
     };
 
@@ -143,6 +153,23 @@ const AdminPanel = () => {
             console.error('Error creating process:', error);
         }
     };
+    const handleCreateObject = async (e) => {
+        e.preventDefault();
+        try {
+            const config = getAuthConfig();
+            const response = await axios.post(`${objectApi}/newobject`, {
+                name: newObjectName,
+                description: newObjectDescription
+            }, config);
+            console.log('Object created:', response.data);
+            setSuccessMessage(`Объект ${response.data.name} успешно создан!`);
+            fetchData(); // Перезагружаем данные после создания
+        } catch (error) {
+            console.error('Ошибка при создании объекта:', error);
+            setSuccessMessage('Ошибка при создании объекта.');
+        }
+    }
+    
 
     const handleDependencyChange = (e) => {
         const { options } = e.target;
@@ -235,9 +262,16 @@ const AdminPanel = () => {
                     <Accordion.Item eventKey="2">
                         <Accordion.Header onClick={() => handleAccordionClick('objects')}>Add Object</Accordion.Header>
                         <Accordion.Body>
-                            <form className="AddObjectForm">
+                            <form className="AddObjectForm" onSubmit={handleCreateObject}>
                                 <label>Task Name:
-                                    <input type="text" name="objectName" />
+                                    <input type="text" name="objectName" onChange={(e)=> setNewObjectName(e.target.value)} />
+                                </label>
+                                <label>
+                                    Описание:
+                                    <input type="text" name="objectDescription" onChange={(e)=>setNewObjectDescription(e.target.value)}/>
+                                </label>
+                                <label>
+                                    <input/>
                                 </label>
                                 <button type="submit">Submit</button>
                             </form>

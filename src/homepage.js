@@ -1,11 +1,14 @@
 import React, { useEffect, useState } from "react";
 import useAuth from "./isAuth";
 import axios from "axios";
+import { useNavigate } from "react-router-dom";
 
 const HomePage = () =>{
 
 
     const {getAuthConfig} = useAuth()
+
+    const navigate = useNavigate('')
 
     const rolesApi = 'http://localhost:5555/api/roles';
     const usersApi = 'http://localhost:5555/api/users';
@@ -43,6 +46,12 @@ const HomePage = () =>{
             
         } catch (error) {
             console.error("Error fetching data:", error);
+            if(error.response.status === 401){
+                localStorage.removeItem('token')
+                navigate('/login')
+                console.log(`naviagtet to login failed with error: ${error}`);
+                
+            }
         }
     };
 
