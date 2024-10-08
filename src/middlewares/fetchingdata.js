@@ -1,16 +1,15 @@
 import axios from "axios";
-import useAuth from "../isAuth";
 
+// Функция fetchSomeData теперь принимает конфигурацию авторизации как аргумент
 const mainApis = {
     rolesApi: 'http://localhost:5555/api/roles/roles',
     objectsApi: 'http://localhost:5555/api/objects/objects',
     usersApi: 'http://localhost:5555/api/users/users',
-    departmentsApi: 'http://localhost:5555/api/departments',
+    departmentsApi: 'http://localhost:5555/api/departments/departments',
     processApi: 'http://localhost:5555/api/processes'
 };
- const {getAuthConfig} = useAuth()
- const authConfig = getAuthConfig()
-const fetchSomeData = async (type) => {
+
+const fetchSomeData = async (type, authConfig) => {
     let data = null;
 
     try {
@@ -50,7 +49,7 @@ const fetchSomeData = async (type) => {
         return data;
     } catch (error) {
         console.error(`Error fetching data for type ${type}: ${error.message}`);
-        throw error;  // Бросаем ошибку дальше для обработки
+        throw error;
     }
 };
 

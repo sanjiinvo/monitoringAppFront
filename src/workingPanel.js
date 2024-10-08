@@ -1,47 +1,26 @@
-import { useEffect, useState } from "react"
-import useAuth from "./isAuth"
+import { useEffect, useState } from "react";
+import useAuth from "./isAuth";
+import fetchSomeData from "./middlewares/fetchingdata";
 
-
-const WorkingPanel = () =>{
-
-
-
-    const [allRoles, setAllRoles] = useState([]);
-    const [allUsers, setAllUsers] = useState([]);
-    const [allDepartments, setAllDepartments] = useState([]);
-    const [allProcesses, setAllProcesses] = useState([]);
+const WorkingPanel = () => {
     const [allObjects, setAllObjects] = useState([]);
-    const {getAuthConfig} = useAuth()
-    const config = getAuthConfig()
+    const {getAuthConfig} = useAuth(); // Хук вызывается здесь, в компоненте
+    const config = getAuthConfig();
 
+    useEffect(() => {
+        const fetchData = async () => {
+            const data = await fetchSomeData('all', config);
+            setAllObjects(data.objects);
+        };
+        fetchData();
+    }, [config]);
 
-    const fetchSomeData = async (type)=>{
-        try {
-            const data = await fetchSomeData(config, 'all')
-        } catch (error) {
-            
-        }
-    }
-
-
-    useEffect(()=>{
-        fetchSomeData('objects')
-        
-    },[])
-
-
-
-    return(
+    return (
         <div>
-            <h2>
-                Working panel
-            </h2>
-            <div>
-                objects:
-                {}
-            </div>
+            <h2>Working panel</h2>
+            <div>objects: {allObjects.map(obj => (<div key={obj.id}>{obj.name}</div>))}</div>
         </div>
-    )
-}
+    );
+};
 
-export default WorkingPanel
+export default WorkingPanel;

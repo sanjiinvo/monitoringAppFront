@@ -7,13 +7,14 @@ import useAuth from "./isAuth";
 import { useNavigate } from "react-router-dom";
 
 const AdminPanel = () => {
-    const navigate = useNavigate('')
+    const navigate = useNavigate('');
 
     const [allRoles, setAllRoles] = useState([]);
     const [allUsers, setAllUsers] = useState([]);
     const [allDepartments, setAllDepartments] = useState([]);
     const [allProcesses, setAllProcesses] = useState([]);
     const [allObjects, setAllObjects] = useState([]);
+    const [allStatuses, setAllStatuses] = useState([]);
 
     const [newDepartmentName, setNewDepartmentName] = useState('');
     const [newUserName, setNewUserName] = useState('');
@@ -31,17 +32,20 @@ const AdminPanel = () => {
     const [newObjectName, setNewObjectName] = useState('');
     const [newObjectDescription, setNewObjectDescription] = useState('');
 
+    const [newStatusName, setNewStatusName] = useState('');
+    const [newStatusDescription, setNewStatusDescription] = useState('');
 
     const [helpData, setHelpData] = useState([]);  
     const [currentWindowHelpState, setCurrentWindowHelpState] = useState('');
     const [successMessage, setSuccessMessage] = useState(''); // Состояние для сообщений об успехе
-    const {getAuthConfig} = useAuth();
+    const { getAuthConfig } = useAuth();
 
     const rolesApi = 'http://localhost:5555/api/roles';
     const usersApi = 'http://localhost:5555/api/users';
     const departmentsApi = 'http://localhost:5555/api/departments';
     const processApi = 'http://localhost:5555/api/processes';
     const objectApi = 'http://localhost:5555/api/objects';
+    const statusesApi = 'http://localhost:5555/api/statusses';
 
     // Функция для загрузки данных
     const fetchData = async () => {
@@ -59,10 +63,12 @@ const AdminPanel = () => {
             const responseObjects = await axios.get(`${objectApi}/objects`, config);
             setAllObjects(responseObjects.data);
 
+            const responseStatuses = await axios.get(`${statusesApi}/statuses`, config);
+            setAllStatuses(responseStatuses.data);
         } catch (error) {
             console.error("Error fetching data:", error);
-            if(error.code === 401){
-                navigate('/login')
+            if (error.response && error.response.status === 401) {
+                navigate('/login');
             }
         }
     };
@@ -75,11 +81,11 @@ const AdminPanel = () => {
         try {
             const config = getAuthConfig();
             let data = [];
-            setCurrentWindowHelpState(section)
+            setCurrentWindowHelpState(section);
             switch (section) {
                 case 'departments':
-                    const response = await axios.get(`${departmentsApi}/departments`, config);
-                    data = response.data;
+                    const responseDepartments = await axios.get(`${departmentsApi}/departments`, config);
+                    data = responseDepartments.data;
                     break;
                 case 'processes':
                     const responseProcesses = await axios.get(`${processApi}/processes`, config);
@@ -88,6 +94,10 @@ const AdminPanel = () => {
                 case 'objects':
                     const responseObjects = await axios.get(`${objectApi}/objects`, config);
                     data = responseObjects.data;
+                    break;
+                case 'statuses':
+                    const responseStatuses = await axios.get(`${statusesApi}/statuses`, config);
+                    data = responseStatuses.data;
                     break;
                 case 'users':
                     const responseUsers = await axios.get(`${usersApi}/users`, config);
@@ -100,10 +110,7 @@ const AdminPanel = () => {
                 default:
                     break;
             }
-
-            setHelpData(data); 
-            console.log(helpData);
-            
+            setHelpData(data);
         } catch (error) {
             console.error("Error fetching data:", error);
         }
@@ -114,8 +121,7 @@ const AdminPanel = () => {
         try {
             const config = getAuthConfig();
             const response = await axios.post(`${departmentsApi}/newdepartment`, { departmentName: newDepartmentName }, config);
-            console.log('Department created:', response.data);
-            setSuccessMessage(`Создан новый отдел: ${response.data.departmentName}`); // Устанавливаем сообщение
+            setSuccessMessage(`Создан новый отдел: ${response.data.departmentName}`);
             fetchData();
         } catch (error) {
             console.error('Error creating department:', error);
@@ -127,7 +133,6 @@ const AdminPanel = () => {
         try {
             const config = getAuthConfig();
             const response = await axios.post(`${usersApi}/newuser`, { username: newUserName, password: newUserPassword, rlname: newUserRealName, roleId: newUserRole, departmentId: newUserDepartment }, config);
-            console.log('User created:', response.data);
             setSuccessMessage(`Пользователь ${response.data.username} успешно создан!`);
             fetchData();
         } catch (error) {
@@ -140,19 +145,23 @@ const AdminPanel = () => {
         try {
             const config = getAuthConfig();
             const response = await axios.post(`${processApi}/newprocess`, {
-                name: newProccessName, 
-                description: newProcessDescription, 
-                workingTime: newProccessWorkingTime, 
-                departmentId: newProcessDepartment, 
-                dependencies: newProccessDependency
+                name: newProccessName,
+                description: newProcessDescription,
+                workingTime: newProccessWorkingTime,
+                departmentId: newProcessDepartment !== "" ? newProcessDepartment : null, // Если отдел не выбран, отправляем null
+                dependencies: newProccessDependency.length > 0 ? newProccessDependency : [] // Если нет зависимостей, отправляем пустой массив
             }, config);
+            fetchData()
+            setSuccessMessage(`proccess created successfully ${response.data.name}`)
             console.log('Process created:', response.data);
-            setSuccessMessage(`Процесс ${response.data.name} успешно создан!`);
-            fetchData();
         } catch (error) {
             console.error('Error creating process:', error);
         }
     };
+    
+    
+      
+
     const handleCreateObject = async (e) => {
         e.preventDefault();
         try {
@@ -161,28 +170,50 @@ const AdminPanel = () => {
                 name: newObjectName,
                 description: newObjectDescription
             }, config);
-            console.log('Object created:', response.data);
             setSuccessMessage(`Объект ${response.data.name} успешно создан!`);
-            fetchData(); // Перезагружаем данные после создания
+            fetchData(); 
         } catch (error) {
             console.error('Ошибка при создании объекта:', error);
-            setSuccessMessage('Ошибка при создании объекта.');
         }
-    }
-    
+    };
+
+    const handleCreateStatus = async (e) => {
+        e.preventDefault();
+        try {
+            const config = getAuthConfig();
+            const response = await axios.post(`${statusesApi}/newstatus`, {
+                name: newStatusName,
+                description: newStatusDescription
+            }, config);
+            setSuccessMessage(`Новый статус создан: ${response.data.name}`);
+            fetchData();
+        } catch (error) {
+            console.error(`Ошибка при создании статуса: ${error}`);
+            setSuccessMessage('Ошибка при создании статуса.');
+        }
+    };
 
     const handleDependencyChange = (e) => {
         const { options } = e.target;
         const selectedDependencies = [];
+    
+        // Проходим по всем вариантам и собираем зависимости, кроме "нет зависимости"
         for (let i = 0; i < options.length; i++) {
-            if (options[i].selected) {
+            if (options[i].selected && options[i].value !== '') {
                 selectedDependencies.push(parseInt(options[i].value));
             }
         }
-        setNewProcessDependency(selectedDependencies);
+    
+        // Если выбран "нет зависимости", очищаем массив зависимостей
+        if (selectedDependencies.length === 0) {
+            setNewProcessDependency([]);
+        } else {
+            setNewProcessDependency(selectedDependencies);
+        }
     };
+    
 
-    return(
+    return (
         <div>
             {successMessage && (
                 <div className="popup-stats">
@@ -194,7 +225,7 @@ const AdminPanel = () => {
                 {helpData.length > 0 ? (
                    <ul>
                    {helpData.map((item, index) => (
-                       <li id={item.id} key={index}>
+                       <li key={index}>
                            {Object.entries(item).map(([key, value]) => (
                                <div key={key}>
                                    <strong>{key}:</strong> {value}
@@ -241,20 +272,23 @@ const AdminPanel = () => {
                                     <input placeholder="Дней" type="text" name="workingTime" onChange={(e) => setNewProcessWorkingTime(e.target.value)} />
                                 </label>
                                 <label>Отдел:
-                                    <select onChange={(e) => setNewProcessDepartment(e.target.value)}>
-                                        {allDepartments.map(dept => (
-                                            <option key={dept.id} value={dept.id}>{dept.departmentName}</option>
-                                        ))}
-                                    </select>
-                                </label>
+    <select onChange={(e) => setNewProcessDepartment(e.target.value)}>
+        <option value="">Нет отдела</option> {/* Опция по умолчанию для "Нет отдела" */}
+        {allDepartments.map(dept => (
+            <option key={dept.id} value={dept.id}>{dept.departmentName}</option>
+        ))}
+    </select>
+</label>
+
                                 <label>Зависимости:
-                                    <select multiple onChange={handleDependencyChange}>
-                                        <option value="">None</option>
-                                        {allProcesses.map(process => (
-                                            <option key={process.id} value={process.id}>{process.name}</option>
-                                        ))}
-                                    </select>
-                                </label> 
+    <select multiple onChange={handleDependencyChange}>
+        <option value="">нет зависимости</option> {/* Опция для "нет зависимости" */}
+        {allProcesses.map(process => (
+            <option key={process.id} value={process.id}>{process.name}</option>
+        ))}
+    </select>
+</label>
+
                                 <button type="submit">Create Process</button>
                             </form>
                         </Accordion.Body>
@@ -269,9 +303,6 @@ const AdminPanel = () => {
                                 <label>
                                     Описание:
                                     <input type="text" name="objectDescription" onChange={(e)=>setNewObjectDescription(e.target.value)}/>
-                                </label>
-                                <label>
-                                    <input/>
                                 </label>
                                 <button type="submit">Submit</button>
                             </form>
@@ -317,9 +348,28 @@ const AdminPanel = () => {
                             </form>
                         </Accordion.Body>
                     </Accordion.Item>
+                    <Accordion.Item eventKey="4">
+                        <Accordion.Header onClick={()=>{handleAccordionClick('statuses')}}>
+                            Добавление Статуса
+                        </Accordion.Header>
+                        <Accordion.Body>
+                            <form onSubmit={handleCreateStatus}>
+                                <label>
+                                    Название Статуса
+                                    <input type="text" name="statusName" onChange={(e) => setNewStatusName(e.target.value)}/>
+                                </label>
+                                <label>
+                                    Описание
+                                    <input type="text" name="statusDescription" onChange={(e) => setNewStatusDescription(e.target.value)}/>
+                                </label>
+                                <button type="submit">create status</button>
+                            </form>
+                        </Accordion.Body>
+                    </Accordion.Item>
                 </Accordion>
             </Container>    
         </div>
-    )
+    );
 }
+
 export default AdminPanel;
