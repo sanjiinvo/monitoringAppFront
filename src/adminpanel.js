@@ -31,6 +31,7 @@ const AdminPanel = () => {
 
     const [newObjectName, setNewObjectName] = useState('');
     const [newObjectDescription, setNewObjectDescription] = useState('');
+    const [newObjectType, setNewObjectType] = useState('');
 
     const [newStatusName, setNewStatusName] = useState('');
     const [newStatusDescription, setNewStatusDescription] = useState('');
@@ -168,7 +169,8 @@ const AdminPanel = () => {
             const config = getAuthConfig();
             const response = await axios.post(`${objectApi}/newobject`, {
                 name: newObjectName,
-                description: newObjectDescription
+                description: newObjectDescription,
+                type: newObjectType
             }, config);
             setSuccessMessage(`Объект ${response.data.name} успешно создан!`);
             fetchData(); 
@@ -273,7 +275,7 @@ const AdminPanel = () => {
                                 </label>
                                 <label>Отдел:
     <select onChange={(e) => setNewProcessDepartment(e.target.value)}>
-        <option value="">Нет отдела</option> {/* Опция по умолчанию для "Нет отдела" */}
+        <option value={null}>Нет отдела</option> {/* Опция по умолчанию для "Нет отдела" */}
         {allDepartments.map(dept => (
             <option key={dept.id} value={dept.id}>{dept.departmentName}</option>
         ))}
@@ -303,6 +305,10 @@ const AdminPanel = () => {
                                 <label>
                                     Описание:
                                     <input type="text" name="objectDescription" onChange={(e)=>setNewObjectDescription(e.target.value)}/>
+                                </label>
+                                <label>
+                                    Тип:
+                                    <input type="text" name="objectType" onChange={(e)=>setNewObjectType(e.target.value)} />
                                 </label>
                                 <button type="submit">Submit</button>
                             </form>

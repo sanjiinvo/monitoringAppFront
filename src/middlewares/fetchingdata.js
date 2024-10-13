@@ -6,7 +6,7 @@ const mainApis = {
     objectsApi: 'http://localhost:5555/api/objects/objects',
     usersApi: 'http://localhost:5555/api/users/users',
     departmentsApi: 'http://localhost:5555/api/departments/departments',
-    processApi: 'http://localhost:5555/api/processes'
+    processApi: 'http://localhost:5555/api/processes/processes'
 };
 
 const fetchSomeData = async (type, authConfig) => {

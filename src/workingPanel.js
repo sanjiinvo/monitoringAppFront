@@ -13,7 +13,7 @@ const WorkingPanel = () => {
             setAllObjects(data.objects);
         };
         fetchData();
-    }, [config]);
+    }, []);
 
     return (
         <div>
