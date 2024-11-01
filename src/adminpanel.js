@@ -184,10 +184,9 @@ const AdminPanel = () => {
         try {
             const config = getAuthConfig();
             const response = await axios.post(`${statusesApi}/newstatus`, {
-                name: newStatusName,
-                description: newStatusDescription
+                statusName: newStatusName,
             }, config);
-            setSuccessMessage(`Новый статус создан: ${response.data.name}`);
+            setSuccessMessage(`Новый статус создан: ${response.data.statusName}`);
             fetchData();
         } catch (error) {
             console.error(`Ошибка при создании статуса: ${error}`);
