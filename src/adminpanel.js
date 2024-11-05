@@ -15,6 +15,7 @@ const AdminPanel = () => {
     const [allProcesses, setAllProcesses] = useState([]);
     const [allObjects, setAllObjects] = useState([]);
     const [allStatuses, setAllStatuses] = useState([]);
+    const [allMainProcesses, setAllMainProcesses] = useState([]);
 
     const [newDepartmentName, setNewDepartmentName] = useState('');
     const [newUserName, setNewUserName] = useState('');
@@ -28,6 +29,7 @@ const AdminPanel = () => {
     const [newProccessWorkingTime, setNewProcessWorkingTime] = useState('');
     const [newProcessDepartment, setNewProcessDepartment] = useState();
     const [newProccessDependency, setNewProcessDependency] = useState([]);
+    const [newMainProcessDependency, setNewMainProcessDependency] = useState(null)
 
     const [newObjectName, setNewObjectName] = useState('');
     const [newObjectDescription, setNewObjectDescription] = useState('');
@@ -41,12 +43,17 @@ const AdminPanel = () => {
     const [successMessage, setSuccessMessage] = useState(''); // Состояние для сообщений об успехе
     const { getAuthConfig } = useAuth();
 
+
+    const [newMainProcessName, setNewMainProcessName] = useState('');
+    const [newMainProcessDescription, setNewMainProcessDescription] = useState('');
+
     const rolesApi = 'http://localhost:5555/api/roles';
     const usersApi = 'http://localhost:5555/api/users';
     const departmentsApi = 'http://localhost:5555/api/departments';
     const processApi = 'http://localhost:5555/api/processes';
     const objectApi = 'http://localhost:5555/api/objects';
     const statusesApi = 'http://localhost:5555/api/statusses';
+    const mainProcessesApi = 'http://localhost:5555/api/mainprocesses'
 
     // Функция для загрузки данных
     const fetchData = async () => {
@@ -66,6 +73,9 @@ const AdminPanel = () => {
 
             const responseStatuses = await axios.get(`${statusesApi}/statuses`, config);
             setAllStatuses(responseStatuses.data);
+
+            const responseAllMainProcesses = await axios.get(`${mainProcessesApi}/mainprocesses`)
+            setAllMainProcesses(responseAllMainProcesses.data)
         } catch (error) {
             console.error("Error fetching data:", error);
             if (error.response && error.response.status === 401) {
@@ -150,7 +160,8 @@ const AdminPanel = () => {
                 description: newProcessDescription,
                 workingTime: newProccessWorkingTime,
                 departmentId: newProcessDepartment !== "" ? newProcessDepartment : null, // Если отдел не выбран, отправляем null
-                dependencies: newProccessDependency.length > 0 ? newProccessDependency : [] // Если нет зависимостей, отправляем пустой массив
+                dependencies: newProccessDependency.length > 0 ? newProccessDependency : [], // Если нет зависимостей, отправляем пустой массив
+                mainDependencies: newMainProcessDependency
             }, config);
             fetchData()
             setSuccessMessage(`proccess created successfully ${response.data.name}`)
@@ -160,7 +171,20 @@ const AdminPanel = () => {
         }
     };
     
-    
+    const handleCreateMainProcess = async (e) => {
+        e.preventDefault();
+        try {
+            const config = getAuthConfig();
+            const response = await axios.post(`${processApi}/mainprocess`, {
+                name: newMainProcessName,
+                description: newMainProcessDescription,
+            }, config);
+            setSuccessMessage(`Главный процесс создан: ${response.data.name}`);
+            fetchData();
+        } catch (error) {
+            console.error('Ошибка при создании главного процесса:', error);
+        }
+    };
       
 
     const handleCreateObject = async (e) => {
@@ -289,10 +313,44 @@ const AdminPanel = () => {
         ))}
     </select>
 </label>
+<label>Dependency (Main Processes):
+                <select onChange={(e) => setNewMainProcessDependency(parseInt(e.target.value))}>
+                    <option value="">нет зависимости</option>
+                    {allMainProcesses.map(mainProcess => (
+                        <option key={mainProcess.id} value={mainProcess.id}>{mainProcess.name}</option>
+                    ))}
+                </select>
+            </label>
 
                                 <button type="submit">Create Process</button>
                             </form>
                         </Accordion.Body>
+                        <Accordion.Item eventKey="5">
+    <Accordion.Header onClick={() => handleAccordionClick('mainProcesses')}>
+        Add Main Process
+    </Accordion.Header>
+    <Accordion.Body>
+        <form onSubmit={handleCreateMainProcess}>
+            <label>
+                Main Process Name:
+                <input
+                    type="text"
+                    name="mainProcessName"
+                    onChange={(e) => setNewMainProcessName(e.target.value)}
+                />
+            </label>
+            <label>
+                Description:
+                <input
+                    type="text"
+                    name="mainProcessDescription"
+                    onChange={(e) => setNewMainProcessDescription(e.target.value)}
+                />
+            </label>
+            <button type="submit">Create Main Process</button>
+        </form>
+    </Accordion.Body>
+</Accordion.Item>
                     </Accordion.Item>
                     <Accordion.Item eventKey="2">
                         <Accordion.Header onClick={() => handleAccordionClick('objects')}>Add Object</Accordion.Header>
