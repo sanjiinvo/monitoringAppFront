@@ -74,7 +74,7 @@ const AdminPanel = () => {
             const responseStatuses = await axios.get(`${statusesApi}/statuses`, config);
             setAllStatuses(responseStatuses.data);
 
-            const responseAllMainProcesses = await axios.get(`${mainProcessesApi}/mainprocesses`)
+            const responseAllMainProcesses = await axios.get(`${mainProcessesApi}/allmainprocesses`)
             setAllMainProcesses(responseAllMainProcesses.data)
         } catch (error) {
             console.error("Error fetching data:", error);
@@ -87,6 +87,22 @@ const AdminPanel = () => {
     useEffect(() => {
         fetchData();
     }, []);
+
+    const generateTableNameInLat = () => {
+        let str = newObjectName
+        const transliterationMap = {
+            'а': 'a', 'б': 'b', 'в': 'v', 'г': 'g', 'д': 'd', 'е': 'e', 'ё': 'e', 'ж': 'zh', 'з': 'z', 'и': 'i', 
+            'й': 'y', 'к': 'k', 'л': 'l', 'м': 'm', 'н': 'n', 'о': 'o', 'п': 'p', 'р': 'r', 'с': 's', 'т': 't', 
+            'у': 'u', 'ф': 'f', 'х': 'kh', 'ц': 'ts', 'ч': 'ch', 'ш': 'sh', 'щ': 'shch', 'ъ': 'j', 'ы': 'y', 
+            'ь': '', 'э': 'e', 'ю': 'yu', 'я': 'ya'
+          };
+        
+          return str
+            .toLowerCase()                       // Приводим строку к нижнему регистру
+            .replace(/\s+/g, '_')                // Заменяем пробелы на подчеркивания
+            .replace(/[а-яё]/g, char => transliterationMap[char] || '') // Транслитерация кириллицы
+            .replace(/[^a-z0-9_]/g, '');         // Удаляем все символы, кроме латинских букв, цифр и подчеркивания
+    }
 
     const handleAccordionClick = async (section) => {
         try {
@@ -161,7 +177,7 @@ const AdminPanel = () => {
                 workingTime: newProccessWorkingTime,
                 departmentId: newProcessDepartment !== "" ? newProcessDepartment : null, // Если отдел не выбран, отправляем null
                 dependencies: newProccessDependency.length > 0 ? newProccessDependency : [], // Если нет зависимостей, отправляем пустой массив
-                mainDependencies: newMainProcessDependency
+                mainProcessDependency: newMainProcessDependency
             }, config);
             fetchData()
             setSuccessMessage(`proccess created successfully ${response.data.name}`)
@@ -175,7 +191,7 @@ const AdminPanel = () => {
         e.preventDefault();
         try {
             const config = getAuthConfig();
-            const response = await axios.post(`${processApi}/mainprocess`, {
+            const response = await axios.post(`${mainProcessesApi}/newmainprocess`, {
                 name: newMainProcessName,
                 description: newMainProcessDescription,
             }, config);
@@ -194,9 +210,12 @@ const AdminPanel = () => {
             const response = await axios.post(`${objectApi}/newobject`, {
                 name: newObjectName,
                 description: newObjectDescription,
-                type: newObjectType
+                type: newObjectType,
+                objectLatName: generateTableNameInLat()
             }, config);
             setSuccessMessage(`Объект ${response.data.name} успешно создан!`);
+            console.log(response.data);
+            
             fetchData(); 
         } catch (error) {
             console.error('Ошибка при создании объекта:', error);

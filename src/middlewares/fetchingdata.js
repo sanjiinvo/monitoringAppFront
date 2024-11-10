@@ -6,7 +6,9 @@ const mainApis = {
     objectsApi: 'http://localhost:5555/api/objects/objects',
     usersApi: 'http://localhost:5555/api/users/users',
     departmentsApi: 'http://localhost:5555/api/departments/departments',
-    processApi: 'http://localhost:5555/api/processes/processes'
+    processApi: 'http://localhost:5555/api/processes/processes',
+    mainProcessesApi:'http://localhost:5555/api/mainprocesses/allmainprocesses'
+
 };
 
 const fetchSomeData = async (type, authConfig) => {
@@ -29,6 +31,11 @@ const fetchSomeData = async (type, authConfig) => {
             case 'processes':
                 data = await axios.get(mainApis.processApi, authConfig);
                 break;
+            case 'allMainProcesses':
+                data = await axios.get(mainApis.mainProcessesApi, authConfig);
+                break;
+
+            // Для остальных случаев добавьте свои запросы к API
             case 'all':
                 const responseDepartments = await axios.get(mainApis.departmentsApi, authConfig);
                 const responseRoles = await axios.get(mainApis.rolesApi, authConfig);
@@ -46,7 +53,9 @@ const fetchSomeData = async (type, authConfig) => {
             default:
                 throw new Error('Invalid type');
         }
+        
         return data;
+        
     } catch (error) {
         console.error(`Error fetching data for type ${type}: ${error.message}`);
         throw error;
